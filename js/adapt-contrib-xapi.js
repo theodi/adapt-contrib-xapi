@@ -245,15 +245,64 @@ define([
           return callback(error);
         }
 
-        // Set the LRS specific properties.
-        this.set({
-          registration: this.getLRSAttribute('registration'),
-          actor: this.getLRSAttribute('actor')
-        });
+        function uuidv4() {
+          return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+          );
+        }      
 
-        this.xapiWrapper.strictCallbacks = true;
+        console.log('xAPI: Checking localstorage for actor, or generorating random actor');
+        // Get the actor from localstorage then set it using
+        if (localStorage.getItem('info.learndata.actor') !== null) {
+          //  this.xapiWrapper.lrs.actor = `{"objectType":"Agent","name":"Testy+McTestface","account":{"homePage":"http://www.example.com/users","name":"1234567890"}}`
+          this.xapiWrapper.lrs.actor = `${localStorage.getItem('info.learndata.actor')}`
+          console.log('xAPI: an actor exists in local storage and is:')
+          console.log(`${localStorage.getItem('info.learndata.actor')}`)
+          this.set({
+            registration: localStorage.getItem('registration'),
+            actor: JSON.parse(localStorage.getItem('info.learndata.actor'))
+          });
+          // insertActorAsUrl();
+          this.xapiWrapper.strictCallbacks = true;
+          callback(); 
+        } else if (localStorage.getItem('info.learndata.actor') === null) {
+          console.log('xAPI: actor does not exist in local storage')
 
-        callback();
+          var courseUser = `${uuidv4()}`
+          var actor = {
+            "objectType": "Agent",
+            "name": courseUser,
+            "account": {
+              "homePage": "https://theodi.org",
+              "name": courseUser
+            }
+          }
+          
+          // an actor does not exist in the url so set one from local storage
+          localStorage.setItem('info.learndata.actor', JSON.stringify(actor));
+          localStorage.setItem('info.learndata.registration', uuidv4())
+          // location.assign(setActorUrl);
+          this.set({
+            registration: localStorage.getItem('info.learndata.registration'),
+            actor: JSON.parse(localStorage.getItem('info.learndata.actor'))
+          });
+          console.log('xAPI: Generated new actor');
+          console.log(localStorage.getItem('info.learndata.actor'))
+          this.xapiWrapper.strictCallbacks = true;
+          callback(); 
+        } else {
+          console.log('xAPI: Failed to generate actor, looking for actor in config?');
+
+          // Set the LRS specific properties.
+          this.set({
+            registration: this.getLRSAttribute('registration'),
+            actor: this.getLRSAttribute('actor')
+          });
+
+          this.xapiWrapper.strictCallbacks = true;
+
+          callback();
+        }
       }
     },
 
