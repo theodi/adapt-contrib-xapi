@@ -43,6 +43,7 @@ define([
     courseDescription: '',
     defaultLang: 'en-US',
     isComplete: false,
+    debug: false,
 
     // Default events to send statements for.
     coreEvents: {
@@ -249,24 +250,64 @@ define([
           return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
           );
+        }
+
+        function getDomain(url) {
+          var domain = new URL(url).hostname;
+          var elems = domain.split('.');
+          var iMax = elems.length - 1;
+          
+          var isSecondLevel = elems.length >= 3 && (elems[iMax] + elems[iMax - 1]).length <= 5;
+          var tld = elems.splice( isSecondLevel ? -3 : -2 ).join('.');
+          if (tld != "localhost") {
+            return "."+tld;
+          }
+          return tld;
+        }
+
+        function setCookie(cname, cvalue, exdays) {
+          const d = new Date();
+          d.setTime(d.getTime() + (exdays*24*60*60*1000));
+          let expires = "expires="+ d.toUTCString();
+          document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/;domain="+getDomain(window.location);
         }      
 
-        console.log('xAPI: Checking localstorage for actor, or generorating random actor');
-        // Get the actor from localstorage then set it using
-        if (localStorage.getItem('info.learndata.actor') !== null) {
+        function getCookie(cname) {
+          let name = cname + "=";
+          let decodedCookie = decodeURIComponent(document.cookie);
+          let ca = decodedCookie.split(';');
+          for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+              c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+              return c.substring(name.length, c.length);
+            }
+          }
+          return "";
+        }
+        if (this.debug) {
+          console.log('xAPI: Checking Cookies for actor, or generating random actor'); 
+        }
+        if (getCookie('info.learndata.actor') !== "") {
           //  this.xapiWrapper.lrs.actor = `{"objectType":"Agent","name":"Testy+McTestface","account":{"homePage":"http://www.example.com/users","name":"1234567890"}}`
-          this.xapiWrapper.lrs.actor = `${localStorage.getItem('info.learndata.actor')}`
-          console.log('xAPI: an actor exists in local storage and is:')
-          console.log(`${localStorage.getItem('info.learndata.actor')}`)
+          this.xapiWrapper.lrs.actor = `${getCookie('info.learndata.actor')}`
+          if(this.debug) { 
+            console.log('xAPI: an actor exists in cookies and is:')
+            console.log(`${getCookie('info.learndata.actor')}`)
+          }
           this.set({
-            registration: localStorage.getItem('registration'),
-            actor: JSON.parse(localStorage.getItem('info.learndata.actor'))
+            registration: getCookie('info.learndata.registration'),
+            actor: JSON.parse(getCookie('info.learndata.actor'))
           });
           // insertActorAsUrl();
           this.xapiWrapper.strictCallbacks = true;
           callback(); 
-        } else if (localStorage.getItem('info.learndata.actor') === null) {
-          console.log('xAPI: actor does not exist in local storage')
+        } else if (getCookie('info.learndata.actor') === "") {
+          if(this.debug) { 
+            console.log('xAPI: actor does not exist in local storage') 
+          }
 
           var courseUser = `${uuidv4()}`
           var actor = {
@@ -279,19 +320,23 @@ define([
           }
           
           // an actor does not exist in the url so set one from local storage
-          localStorage.setItem('info.learndata.actor', JSON.stringify(actor));
-          localStorage.setItem('info.learndata.registration', uuidv4())
-          // location.assign(setActorUrl);
+          setCookie('info.learndata.actor', JSON.stringify(actor), 365);
+          setCookie('registration', courseUser, 365);
           this.set({
-            registration: localStorage.getItem('info.learndata.registration'),
-            actor: JSON.parse(localStorage.getItem('info.learndata.actor'))
+            registration: courseUser,
+            actor: actor
           });
-          console.log('xAPI: Generated new actor');
-          console.log(localStorage.getItem('info.learndata.actor'))
+          if(this.debug) { 
+            console.log('xAPI: Generated new actor');
+            console.log(actor);
+            console.log(getCookie('info.learndata.actor'));
+          }
           this.xapiWrapper.strictCallbacks = true;
           callback(); 
         } else {
-          console.log('xAPI: Failed to generate actor, looking for actor in config?');
+          if(this.debug) { 
+            console.log('xAPI: Failed to generate actor, looking for actor in config?'); 
+          }
 
           // Set the LRS specific properties.
           this.set({
