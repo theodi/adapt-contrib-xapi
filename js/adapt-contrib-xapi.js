@@ -105,7 +105,8 @@ define([
           generateIds: this.getConfig('_generateIds'),
           shouldTrackState: this.getConfig('_shouldTrackState'),
           shouldUseRegistration: this.getConfig('_shouldUseRegistration') || false,
-          componentBlacklist: this.getConfig('_componentBlacklist') || []
+          componentBlacklist: this.getConfig('_componentBlacklist') || [],
+          cookieDomain: this.getConfig('_cookiePrefix')
         });
 
         var componentBlacklist = this.get('componentBlacklist');
@@ -290,21 +291,22 @@ define([
         if (this.debug) {
           console.log('xAPI: Checking Cookies for actor, or generating random actor'); 
         }
-        if (getCookie('info.learndata.actor') !== "") {
+        let cookieDomain = this.getConfig('_cookiePrefix');
+        if (getCookie(cookieDomain + '.actor') !== "") {
           //  this.xapiWrapper.lrs.actor = `{"objectType":"Agent","name":"Testy+McTestface","account":{"homePage":"http://www.example.com/users","name":"1234567890"}}`
-          this.xapiWrapper.lrs.actor = `${getCookie('info.learndata.actor')}`
+          this.xapiWrapper.lrs.actor = `${getCookie(cookieDomain + '.actor')}`
           if(this.debug) { 
             console.log('xAPI: an actor exists in cookies and is:')
-            console.log(`${getCookie('info.learndata.actor')}`)
+            console.log(`${getCookie(cookieDomain + '.actor')}`)
           }
           this.set({
-            registration: getCookie('info.learndata.registration'),
-            actor: JSON.parse(getCookie('info.learndata.actor'))
+            registration: getCookie(cookieDomain + '.registration'),
+            actor: JSON.parse(getCookie(cookieDomain + '.actor'))
           });
           // insertActorAsUrl();
           this.xapiWrapper.strictCallbacks = true;
           callback(); 
-        } else if (getCookie('info.learndata.actor') === "") {
+        } else if (getCookie(cookieDomain + 'actor') === "") {
           if(this.debug) { 
             console.log('xAPI: actor does not exist in local storage') 
           }
@@ -320,8 +322,8 @@ define([
           }
           
           // an actor does not exist in the url so set one from local storage
-          setCookie('info.learndata.actor', JSON.stringify(actor), 365);
-          setCookie('registration', courseUser, 365);
+          setCookie(cookieDomain + 'actor', JSON.stringify(actor), 365);
+          setCookie(cookieDomain + 'registration', courseUser, 365);
           this.set({
             registration: courseUser,
             actor: actor
@@ -329,7 +331,7 @@ define([
           if(this.debug) { 
             console.log('xAPI: Generated new actor');
             console.log(actor);
-            console.log(getCookie('info.learndata.actor'));
+            console.log(getCookie(cookieDomain + 'actor'));
           }
           this.xapiWrapper.strictCallbacks = true;
           callback(); 
@@ -1118,7 +1120,7 @@ define([
       if (state.components) {
         _.each(state.components, function(stateObject) {
           var restoreModel = Adapt.findById(stateObject._id);
-
+          
           if (restoreModel) {
             restoreModel.setTrackableState(stateObject);
           } else {

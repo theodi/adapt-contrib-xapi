@@ -85,6 +85,15 @@
                   "validators": [],
                   "help": "Unique identifier for this xAPI activity, i.e. usually the URL to the course."
                 },
+                "_cookiePrefix": {
+                  "type": "string",
+                  "required": true,
+                  "title": "Cookie Prefix",
+                  "default": "",
+                  "inputType": "Text",
+                  "validators": [],
+                  "help": "Domain for the cookie prefix to separate it from others, e.g. com.example"
+                },
                 "_endpoint": {
                   "type": "string",
                   "required": true,
@@ -308,6 +317,15 @@
                   },
                   "validators": [],
                   "help": "Determines how the plugin should behave whenever it fails to successfully connect or send statements to the configured LRS"
+                },
+                "_queryURL": {
+                  "type": "string",
+                  "required": false,
+                  "title": "Learning Locker API Query Endpoint",
+                  "default": "",
+                  "inputType": "Text",
+                  "validators": [],
+                  "help": "Location of the ODI LRS open query interface for aggregate statistics, see https://github.com/theodi/LearningLockerAPI"
                 }
               }
             }
