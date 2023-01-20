@@ -306,7 +306,7 @@ define([
           // insertActorAsUrl();
           this.xapiWrapper.strictCallbacks = true;
           callback(); 
-        } else if (getCookie(cookieDomain + 'actor') === "") {
+        } else if (getCookie(cookieDomain + '.actor') === "") {
           if(this.debug) { 
             console.log('xAPI: actor does not exist in local storage') 
           }
@@ -322,8 +322,8 @@ define([
           }
           
           // an actor does not exist in the url so set one from local storage
-          setCookie(cookieDomain + 'actor', JSON.stringify(actor), 365);
-          setCookie(cookieDomain + 'registration', courseUser, 365);
+          setCookie(cookieDomain + '.actor', JSON.stringify(actor), 365);
+          setCookie(cookieDomain + '.registration', courseUser, 365);
           this.set({
             registration: courseUser,
             actor: actor
@@ -331,7 +331,7 @@ define([
           if(this.debug) { 
             console.log('xAPI: Generated new actor');
             console.log(actor);
-            console.log(getCookie(cookieDomain + 'actor'));
+            console.log(getCookie(cookieDomain + '.actor'));
           }
           this.xapiWrapper.strictCallbacks = true;
           callback(); 
