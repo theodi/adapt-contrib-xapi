@@ -316,7 +316,7 @@ define([
             "objectType": "Agent",
             "name": courseUser,
             "account": {
-              "homePage": "https://theodi.org",
+              "homePage": "http://" + getDomain(window.location),
               "name": courseUser
             }
           }
